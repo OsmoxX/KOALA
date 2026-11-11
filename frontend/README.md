@@ -1,6 +1,6 @@
 # KOALA – Frontend
 
-Frontend aplikacji KOALA, napisany w **Next.js, React i TypeScript**. Aplikacja umożliwia nauczycielom rejestrację, logowanie i weryfikację adresu e-mail.
+Frontend aplikacji KOALA, stworzony w Next.js, React i TypeScript. Aplikacja umożliwia nauczycielom rejestrację, logowanie oraz weryfikację adresu e-mail.
 
 Frontend komunikuje się z backendem NestJS przez REST API.
 
@@ -15,7 +15,7 @@ Frontend komunikuje się z backendem NestJS przez REST API.
 
 ## Uruchomienie
 
-1. Przejdź do katalogu `frontend`:
+1. Przejdź do katalogu frontend:
 
 ```bash
 cd frontend
@@ -39,9 +39,11 @@ BACKEND_API_URL=http://localhost:3000/api
 npm run dev -- -p 3001
 ```
 
-Aplikacja będzie dostępna pod adresem http://localhost:3001.
+Aplikacja będzie dostępna pod adresem:
 
-Do poprawnego działania wymagany jest uruchomiony backend NestJS na porcie `3000`.
+http://localhost:3001
+
+Do działania wymagany jest uruchomiony backend NestJS na porcie 3000.
 
 ## Funkcjonalności
 
@@ -52,7 +54,7 @@ Do poprawnego działania wymagany jest uruchomiony backend NestJS na porcie `300
 - **Panel nauczyciela** (`/dashboard`) – wyświetlanie danych zalogowanego użytkownika.
 - **Wylogowanie** – zakończenie sesji użytkownika.
 
-Aplikacja obsługuje komunikaty błędów i uwierzytelnianie za pomocą JWT.
+Aplikacja obsługuje komunikaty błędów oraz uwierzytelnianie za pomocą JWT.
 
 ## Integracja z backendem
 
@@ -97,6 +99,8 @@ frontend/
 
 ## Status projektu
 
-Zaimplementowano rejestrację, logowanie, weryfikację e-mail, obsługę JWT oraz podstawowy panel nauczyciela. Frontend jest połączony z backendem NestJS.
+Zaimplementowano rejestrację, logowanie, weryfikację e-mail, obsługę JWT oraz podstawowy panel nauczyciela.
 
-W kolejnych etapach planowana jest rozbudowa panelu o funkcje związane z obsługą konkursów.
+Frontend jest zintegrowany z backendem NestJS.
+
+W kolejnych etapach planowana jest rozbudowa panelu o funkcjonalności związane z obsługą konkursów.
