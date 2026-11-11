@@ -12,7 +12,7 @@ System do obsługi konkursu KOALA (KOmbinatoryka, Algorytmika i LOgika), projekt
 Wymagania: Node.js 22+, Docker (albo własny PostgreSQL 16).
 
 ```bash
-docker compose up -d          # baza PostgreSQL na localhost:5432
+docker compose up -d          # baza PostgreSQL na localhost:5433
 cd backend
 cp .env.example .env          # uzupełnij sekrety, jeśli trzeba
 npm install                   # instaluje zależności i generuje klienta Prisma

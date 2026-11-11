@@ -7,8 +7,9 @@ services:
       POSTGRES_USER: koala
       POSTGRES_PASSWORD: koala
       POSTGRES_DB: koala
+    # 5433 na hoście, żeby nie kolidować z lokalnie zainstalowanym PostgreSQL
     ports:
-      - '5432:5432'
+      - '5433:5432'
     volumes:
       - koala-db:/var/lib/postgresql/data
     healthcheck:
