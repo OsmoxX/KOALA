@@ -12,6 +12,7 @@ import {
   UsersService,
 } from '../users/users.service.js';
 import type { LoginDto } from './dto/login.dto.js';
+import { EmailVerificationService } from './email-verification.service.js';
 import type { RegisterTeacherDto } from './dto/register-teacher.dto.js';
 import type { AuthUser, JwtPayload } from './jwt-payload.js';
 import { hashPassword, verifyPassword } from './password.js';
@@ -30,6 +31,7 @@ export class AuthService {
   constructor(
     private readonly users: UsersService,
     private readonly jwt: JwtService,
+    private readonly emailVerification: EmailVerificationService,
   ) {}
 
   /** Rejestracja nauczyciela (KOALA-10). Konto czeka na weryfikację e-mail. */
@@ -45,6 +47,7 @@ export class AuthService {
       schoolName: dto.schoolName,
       schoolCity: dto.schoolCity,
     });
+    await this.emailVerification.sendVerificationEmail(user);
     return toPublicUser(user);
   }
 
@@ -75,6 +78,18 @@ export class AuthService {
       tokenType: 'Bearer',
       user: toPublicUser(user),
     };
+  }
+
+  verifyEmail(token: string): Promise<void> {
+    return this.emailVerification.verify(token);
+  }
+
+  /** Ponowna wysyłka linku; odpowiedź nie zdradza, czy konto istnieje. */
+  async resendVerification(email: string): Promise<void> {
+    const user = await this.users.findByEmail(email);
+    if (user && !user.emailVerifiedAt) {
+      await this.emailVerification.sendVerificationEmail(user);
+    }
   }
 
   async me(authUser: AuthUser): Promise<PublicUser> {

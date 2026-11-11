@@ -11,6 +11,10 @@ import type { PublicUser } from '../users/users.service.js';
 import { AuthService, type LoginResult } from './auth.service.js';
 import { CurrentUser } from './current-user.decorator.js';
 import { LoginDto } from './dto/login.dto.js';
+import {
+  ResendVerificationDto,
+  VerifyEmailDto,
+} from './dto/verify-email.dto.js';
 import { RegisterTeacherDto } from './dto/register-teacher.dto.js';
 import { JwtAuthGuard } from './jwt-auth.guard.js';
 import type { AuthUser } from './jwt-payload.js';
@@ -31,6 +35,29 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   login(@Body() dto: LoginDto): Promise<LoginResult> {
     return this.auth.login(dto);
+  }
+
+  /** POST /api/auth/verify-email – aktywacja konta tokenem z linku. */
+  @Post('verify-email')
+  @HttpCode(HttpStatus.OK)
+  async verifyEmail(@Body() dto: VerifyEmailDto): Promise<{ message: string }> {
+    await this.auth.verifyEmail(dto.token);
+    return {
+      message: 'Adres e-mail został potwierdzony. Możesz się zalogować.',
+    };
+  }
+
+  /** POST /api/auth/resend-verification – ponowne wysłanie linku. */
+  @Post('resend-verification')
+  @HttpCode(HttpStatus.ACCEPTED)
+  async resendVerification(
+    @Body() dto: ResendVerificationDto,
+  ): Promise<{ message: string }> {
+    await this.auth.resendVerification(dto.email);
+    return {
+      message:
+        'Jeśli konto istnieje i nie jest jeszcze aktywne, wysłaliśmy nowy link.',
+    };
   }
 
   /** GET /api/auth/me – dane zalogowanego użytkownika. */
