@@ -1,96 +1,71 @@
-
 # KOALA – frontend
 
-Aplikacja kliencka systemu konkursowego KOALA: React, TypeScript, Vite, React Router. Responsywny interfejs umożliwiający rejestrację i logowanie nauczycieli oraz obsługę komunikatów dotyczących weryfikacji adresu e-mail.
+Aplikacja webowa systemu KOALA: Next.js (App Router), React, TypeScript i CSS. Frontend komunikuje się z backendem NestJS przez REST API.
 
 ## Uruchomienie
 
-Przejdź do katalogu `frontend/` i wykonaj:
-
 ```bash
 npm install
-npm run dev
+npm run dev -- -p 3001
 ```
 
-Aplikacja jest domyślnie dostępna pod adresem `http://localhost:5173`.
+Frontend dostępny jest pod adresem `http://localhost:3001`.
 
-Obecna wersja wykorzystuje mock API, dlatego do uruchomienia formularzy nie jest wymagany działający backend.
+Utwórz plik `.env.local` w katalogu `frontend/`:
 
-## Widoki
+```env
+BACKEND_API_URL=http://localhost:3000/api
+```
 
-| Ścieżka | Opis |
-|---|---|
-| `/` | Przekierowanie do logowania |
-| `/register` | Formularz rejestracji nauczyciela |
-| `/login` | Formularz logowania |
-| `/login?verified=success` | Komunikat o pomyślnej weryfikacji e-maila (podgląd) |
-| `/login?verified=error` | Komunikat o błędzie weryfikacji |
-| `/login?verified=pending` | Informacja o konieczności potwierdzenia e-maila |
+Do poprawnego działania rejestracji i logowania wymagany jest uruchomiony backend NestJS oraz baza PostgreSQL.
 
 ## Funkcjonalności
 
-### Rejestracja nauczyciela
+| **Ścieżka** | **Opis** |
+|---|---|
+| `/register` | Rejestracja nauczyciela z walidacją formularza |
+| `/login` | Logowanie nauczyciela i ponowne wysyłanie linku aktywacyjnego |
+| `/weryfikacja-email` | Aktywacja konta przy użyciu jednorazowego tokenu |
+| `/dashboard` | Podstawowy panel nauczyciela i wylogowanie |
 
-- Formularz: imię, nazwisko, e-mail, hasło i potwierdzenie hasła.
-- Walidacja wymaganych pól.
-- Sprawdzanie poprawności adresu e-mail.
-- Minimalna długość hasła: 8 znaków.
-- Sprawdzanie zgodności haseł.
-- Komunikaty błędów pod odpowiednimi polami.
-- Symulacja wykrywania istniejącego adresu e-mail.
-- Komunikat po poprawnym wypełnieniu formularza.
+Po zalogowaniu JWT przechowywany jest w ciasteczku HttpOnly. Next.js przekazuje żądania do backendu NestJS.
 
-### Logowanie
+Bez skonfigurowanego Resend link aktywacyjny jest wypisywany w logach backendu.
 
-- Formularz zawierający e-mail i hasło.
-- Walidacja wymaganych pól i formatu e-maila.
-- Obsługa komunikatów o błędnych danych logowania.
-- Informacja o konieczności weryfikacji e-maila.
-- Komunikaty o pomyślnej i nieudanej weryfikacji.
-- Przycisk ponowienia wysyłki linku weryfikacyjnego (symulacja).
-- Obsługa stanu ładowania formularza.
+## Endpointy
 
-### Responsywność
-
-- Interfejs dostosowany do komputerów i urządzeń mobilnych.
-- Elastyczna szerokość formularzy.
-- Czytelne komunikaty błędów i potwierdzeń.
-- Nawigacja między rejestracją i logowaniem.
-
-## Komunikacja z backendem
-
-Backend KOALA udostępnia REST API w NestJS z prefiksem `/api`.
-
-| Endpoint | Opis |
+| **Metoda i ścieżka** | **Opis** |
 |---|---|
 | `POST /api/auth/register` | Rejestracja nauczyciela |
-| `POST /api/auth/login` | Logowanie użytkownika |
+| `POST /api/auth/login` | Logowanie |
 | `POST /api/auth/verify-email` | Weryfikacja adresu e-mail |
-| `POST /api/auth/resend-verification` | Ponowne wysłanie linku weryfikacyjnego |
-| `GET /api/auth/me` | Pobranie danych zalogowanego użytkownika |
+| `POST /api/auth/resend-verification` | Ponowne wysłanie linku |
+| `GET /api/auth/me` | Dane zalogowanego użytkownika |
+| `POST /api/auth/logout` | Usunięcie lokalnej sesji |
 
-Obecna implementacja `src/api/auth.ts` wykorzystuje mock API do symulowania odpowiedzi serwera.
+Endpointy są obsługiwane przez Next.js i przekazywane do NestJS, z wyjątkiem wylogowania obsługiwanego lokalnie.
 
-Rzeczywista rejestracja, uwierzytelnianie JWT oraz wysyłanie wiadomości weryfikacyjnych wymagają integracji z backendem NestJS.
+## Skrypty
 
-## Testy
+| **Skrypt** | **Opis** |
+|---|---|
+| `npm run dev -- -p 3001` | Uruchomienie aplikacji w trybie developerskim |
+| `npm run build` | Build produkcyjny |
+| `npm run start` | Uruchomienie buildu produkcyjnego |
+| `npm run lint` | Sprawdzenie kodu przez ESLint |
 
-Testy przygotowane z wykorzystaniem Vitest i React Testing Library.
+## Struktura
 
-Sprawdzane funkcjonalności:
-
-- Walidacja formularza rejestracji.
-- Obsługa niepoprawnych adresów e-mail.
-- Wykrywanie istniejącego konta (mock).
-- Walidacja formularza logowania.
-- Obsługa błędów logowania.
-- Wyświetlanie komunikatów weryfikacji e-maila.
-- Obsługa ponowienia weryfikacji.
-
-Uruchomienie testów:
-
-```bash
-npm test
+```text
+src/app/                   Strony aplikacji (App Router)
+src/app/api/auth/          Endpointy API Next.js
+src/app/register/          Formularz rejestracji
+src/app/login/             Formularz logowania
+src/app/weryfikacja-email/ Weryfikacja adresu e-mail
+src/app/dashboard/         Panel nauczyciela
+src/lib/                   Komunikacja z backendem i funkcje autoryzacji
+src/app/globals.css        Style aplikacji
+public/                    Pliki statyczne
 ```
 
 Testy w trybie watch:
