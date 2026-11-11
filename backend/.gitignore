@@ -1,0 +1,9 @@
+node_modules
+dist
+coverage
+
+# Zmienne środowiskowe (sekrety) nie trafiają do repozytorium
+.env
+
+# Klient Prisma generowany przez `prisma generate`
+/src/generated/prisma
