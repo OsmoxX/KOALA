@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import type { ReactNode } from 'react';
 
 import './globals.css';
@@ -16,7 +17,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pl">
-      <body>{children}</body>
+      <body>
+        <div className="app-content">{children}</div>
+        <footer className="site-footer">
+          <span>KOALA – WMI UAM Poznań</span>
+          {' · '}
+          <Link href="/rodo">Klauzula RODO</Link>
+        </footer>
+      </body>
     </html>
   );
 }

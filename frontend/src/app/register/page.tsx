@@ -343,8 +343,16 @@ export default function RegisterPage() {
                 />
                 <span>
                   Akceptuję regulamin konkursu i potwierdzam
-                  zapoznanie się z informacjami dotyczącymi
-                  przetwarzania danych osobowych.
+                  zapoznanie się z{' '}
+                  <Link
+                    href="/rodo"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    informacjami dotyczącymi przetwarzania
+                    danych osobowych (RODO)
+                  </Link>
+                  .
                 </span>
               </label>
             </div>
