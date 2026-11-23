@@ -200,6 +200,13 @@ export default function LoginPage() {
             Zarejestruj się
           </Link>
         </p>
+
+      <p className="auth-footer">
+    Jesteś uczniem?{" "}
+    <Link href="/student/login">
+      Zaloguj się jako uczeń
+    </Link>
+  </p>
       </section>
     </main>
   );

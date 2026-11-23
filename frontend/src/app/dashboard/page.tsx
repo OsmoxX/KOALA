@@ -1,170 +1,181 @@
-'use client';
+"use client";
 
-import {
-  useEffect,
-  useState,
-} from 'react';
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { logoutTeacher } from "@/lib/auth-client";
+import styles from "./page.module.css";
 
-import { useRouter } from 'next/navigation';
-
-import {
-  logoutTeacher,
-} from '@/lib/auth-client';
-
-interface User {
-  id: string;
+type Teacher = {
+  firstName?: string;
+  lastName?: string;
   email: string;
-  firstName: string;
-  lastName: string;
-  role: string;
-  emailVerifiedAt: string | null;
-}
+  role?: string;
+};
 
 export default function DashboardPage() {
   const router = useRouter();
 
-  const [user, setUser] =
-    useState<User | null>(null);
+  const [teacher, setTeacher] = useState<Teacher | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loggingOut, setLoggingOut] = useState(false);
+  const [error, setError] = useState("");
 
-  const [loading, setLoading] =
-    useState(true);
-
-  const [loggingOut, setLoggingOut] =
-    useState(false);
-
-  const [error, setError] =
-    useState('');
+  console.log("CSS MODULE:", styles);
+  console.log("KLASA PAGE:", styles.page);
+  console.log("KLASA CARD:", styles.card);
+  console.log("TEST STYLE:", styles.testStyle);
 
   useEffect(() => {
-    let active = true;
-
-    async function loadUser() {
+    async function loadTeacher() {
       try {
-        const response = await fetch(
-          '/api/auth/me',
-          {
-            cache: 'no-store',
-          }
-        );
+        const response = await fetch("/api/auth/me", {
+          cache: "no-store",
+          credentials: "same-origin",
+        });
 
-        if (
-          response.status === 401 ||
-          response.status === 403
-        ) {
-          router.replace('/login');
+        if (response.status === 401) {
+          router.replace("/login");
           return;
         }
 
         if (!response.ok) {
-          throw new Error(
-            'Nie udało się pobrać danych użytkownika.'
-          );
+          throw new Error("Nie udało się pobrać danych użytkownika.");
         }
 
-        const data: User =
-          await response.json();
-
-        if (active) {
-          setUser(data);
-        }
+        const data = await response.json();
+        setTeacher(data.user ?? data);
       } catch (err) {
-        if (active) {
-          setError(
-            err instanceof Error
-              ? err.message
-              : 'Wystąpił błąd.'
-          );
-        }
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Wystąpił błąd podczas pobierania danych."
+        );
       } finally {
-        if (active) {
-          setLoading(false);
-        }
+        setLoading(false);
       }
     }
 
-    void loadUser();
-
-    return () => {
-      active = false;
-    };
+    loadTeacher();
   }, [router]);
 
   async function handleLogout() {
-    setError('');
     setLoggingOut(true);
+    setError("");
 
     try {
       await logoutTeacher();
-
-      router.replace('/login');
+      router.replace("/login");
       router.refresh();
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Nie udało się wylogować.'
-      );
-
+    } catch {
+      setError("Nie udało się wylogować.");
       setLoggingOut(false);
     }
   }
 
-  return (
-    <main className="auth-page">
-      <section className="auth-card">
-        <h1 className="brand">KOALA</h1>
-        <h2>Panel nauczyciela</h2>
+  if (loading) {
+    return (
+      <main className={styles.loading}>
+        Ładowanie panelu nauczyciela...
+      </main>
+    );
+  }
 
-        {loading && (
-          <p role="status">
-            Ładowanie danych...
-          </p>
-        )}
+  return (
+    <div className={styles.page}>
+      <header className={styles.navbar}>
+        <Link href="/dashboard" className={styles.logo}>
+          KOALA
+        </Link>
+
+        <span className={styles.appName}>
+          Konkurs matematyczno-informatyczny
+        </span>
+
+        <div className={styles.navRight}>
+          {teacher && (
+            <span className={styles.userName}>
+              {teacher.firstName} {teacher.lastName}
+            </span>
+          )}
+
+          <button
+            onClick={handleLogout}
+            disabled={loggingOut}
+            className={styles.logoutButton}
+          >
+            {loggingOut ? "Wylogowywanie..." : "Wyloguj"}
+          </button>
+        </div>
+      </header>
+
+      <main className={styles.container}>
+        <p className={styles.sectionLabel}>Strefa nauczyciela</p>
+
+        <h1 className={styles.title}>Panel nauczyciela</h1>
+
+        <p className={styles.subtitle}>
+          Zarządzaj swoimi drużynami i uczniami biorącymi udział
+          w konkursie KOALA.
+        </p>
 
         {error && (
-          <div
-            className="alert error"
-            role="alert"
-          >
+          <div className={styles.error} role="alert">
             {error}
           </div>
         )}
 
-        {user && (
+        {teacher && (
           <>
-            <div className="alert success">
-              Jesteś zalogowany!
-            </div>
+            <section className={styles.card}>
+              <h2>Twoje konto</h2>
 
-            <p>
-              <strong>
-                Imię i nazwisko:
-              </strong>{' '}
-              {user.firstName} {user.lastName}
-            </p>
+              <div className={styles.userInfo}>
+                <p>
+                  <strong>Imię i nazwisko:</strong>{" "}
+                  {`${teacher.firstName ?? ""} ${teacher.lastName ?? ""}`.trim() ||
+                    "Brak danych"}
+                </p>
 
-            <p>
-              <strong>E-mail:</strong>{' '}
-              {user.email}
-            </p>
+                <p>
+                  <strong>E-mail:</strong> {teacher.email}
+                </p>
 
-            <p>
-              <strong>Rola:</strong>{' '}
-              {user.role}
-            </p>
+                {teacher.role && (
+                  <p>
+                    <strong>Rola:</strong> {teacher.role}
+                  </p>
+                )}
+              </div>
+            </section>
 
-            <button
-              type="button"
-              disabled={loggingOut}
-              onClick={() => void handleLogout()}
-            >
-              {loggingOut
-                ? 'Wylogowywanie...'
-                : 'Wyloguj się'}
-            </button>
+            <section className={styles.card}>
+              <h2>Zarządzanie drużynami</h2>
+
+              <p className={styles.cardDescription}>
+                Twórz nowe drużyny, przeglądaj ich składy
+                i zarządzaj uczniami.
+              </p>
+
+              <div className={styles.actions}>
+                <Link
+                  href="/dashboard/teams"
+                  className={styles.primaryButton}
+                >
+                  Moje drużyny
+                </Link>
+
+                <Link
+                  href="/dashboard/teams/new"
+                  className={styles.secondaryButton}
+                >
+                  + Utwórz drużynę
+                </Link>
+              </div>
+            </section>
           </>
         )}
-      </section>
-    </main>
+      </main>
+    </div>
   );
 }
