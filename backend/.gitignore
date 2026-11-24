@@ -7,3 +7,6 @@ coverage
 
 # Klient Prisma generowany przez `prisma generate`
 /src/generated/prisma
+
+# Podgląd e-maili z `npm run mail:sample`
+/mail-preview
