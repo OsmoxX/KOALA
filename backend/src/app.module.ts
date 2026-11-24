@@ -5,6 +5,7 @@ import { MailModule } from './mail/mail.module.js';
 import { HealthController } from './health/health.controller.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { StudentsModule } from './students/students.module.js';
+import { TeamsModule } from './teams/teams.module.js';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { StudentsModule } from './students/students.module.js';
     MailModule,
     AuthModule,
     StudentsModule,
+    TeamsModule,
   ],
   controllers: [HealthController],
 })

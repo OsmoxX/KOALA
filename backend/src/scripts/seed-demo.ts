@@ -1,12 +1,14 @@
 /**
- * Dane demonstracyjne do lokalnego pokazania logowania ucznia (KOALA-14),
- * dopóki nie ma API tworzenia drużyn i kont uczniów (KOALA-80/81/82).
+ * Dane demonstracyjne do lokalnego pokazania logowania ucznia (KOALA-14)
+ * bez klikania w panelu nauczyciela. Drużyny i konta uczniów normalnie
+ * zakłada nauczyciel przez API drużyn (KOALA-80/81/82, `/api/teams`).
  *
  *   npm run seed:demo -- --teacher-email twoj@adres.pl
  *
- * Tworzy (lub nadpisuje) aktywnego nauczyciela, kategorię, drużynę i dwóch
- * uczniów z hasłami jednorazowymi. Prośba ucznia o reset hasła wyśle mail
- * na adres nauczyciela – przy Resend ustaw tu adres właściciela konta Resend.
+ * Tworzy (lub nadpisuje) aktywnego nauczyciela, drużynę i trzech uczniów
+ * z hasłami jednorazowymi (kategoria pochodzi z migracji, w razie braku
+ * jest dodawana). Prośba ucznia o reset hasła wyśle mail na adres
+ * nauczyciela – przy Resend ustaw tu adres właściciela konta Resend.
  */
 import { parseArgs } from 'node:util';
 import { ConfigService } from '@nestjs/config';
@@ -26,17 +28,18 @@ const STUDENT_PASSWORD = 'Start2026!';
 const students = [
   { firstName: 'Ola', login: 'ola.demo' },
   { firstName: 'Bartek', login: 'bartek.demo' },
+  { firstName: 'Kuba', login: 'kuba.demo' },
 ];
 
 const prisma = new PrismaService(new ConfigService());
 await prisma.$connect();
 try {
   const category = await prisma.teamCategory.upsert({
-    where: { name: 'Szkoła podstawowa, klasy 7–8' },
+    where: { name: 'Szkoła podstawowa, klasy 6–8' },
     update: {},
     create: {
-      name: 'Szkoła podstawowa, klasy 7–8',
-      minMembers: 2,
+      name: 'Szkoła podstawowa, klasy 6–8',
+      minMembers: 3,
       maxMembers: 4,
     },
   });
