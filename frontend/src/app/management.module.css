@@ -33,6 +33,9 @@
 .error { background: #fceaea; border-left: 4px solid #b62a2a; color: #992828; border-radius: 10px; padding: 15px 18px; margin: 16px 0; }
 .member { padding: 14px 0; border-bottom: 1px solid #e1e4ef; }
 .member:last-child { border-bottom: 0; }
+.memberRow { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+.memberInfo { min-width: 0; overflow-wrap: anywhere; }
+.memberAction { flex-shrink: 0; }
 .label { color: #617068; font-size: 13px; margin: 0 0 5px; }
 .value { font-weight: 700; margin: 0 0 14px; overflow-wrap: anywhere; }
 .pill { display: inline-block; color: #718bd0; background: #e7e9f5; border-radius: 999px; padding: 5px 11px; font-size: 13px; font-weight: 700; }

@@ -62,11 +62,13 @@ function TeamDetailsContent() {
               <h2>Skład drużyny</h2>
               <p className={s.muted}>Limit: od {team.minMembers} do {team.maxMembers} osób.</p>
               {team.students.length === 0 ? <p>Nie dodano jeszcze uczniów.</p> : team.students.map((student) => (
-                <div className={s.member} key={student.id}>
-                  <strong>{student.firstName}</strong>
-                  <div className={s.muted}>Login: {student.login}</div>
+                <div className={`${s.member} ${s.memberRow}`} key={student.id}>
+                  <div className={s.memberInfo}>
+                    <strong>{student.firstName}</strong>
+                    <div className={s.muted}>Login: {student.login}</div>
+                  </div>
                   <button
-                    className={s.secondaryButton}
+                    className={`${s.secondaryButton} ${s.memberAction}`}
                     type="button"
                     disabled={removingId !== null}
                     onClick={async () => {
