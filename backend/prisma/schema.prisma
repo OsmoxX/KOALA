@@ -91,7 +91,8 @@ model EmailVerificationToken {
 }
 
 /// Kategoria wiekowa drużyny z limitem liczby uczniów (wg regulaminu).
-/// Minimalny model na potrzeby profilu ucznia (KOALA-86) – rozwijany w KOALA-80.
+/// Kategorie XIII edycji (SP kl. 6–8, szkoły ponadpodstawowe; 3–4 uczniów)
+/// dodaje migracja `teams_management` (KOALA-80).
 model TeamCategory {
   id         String @id @default(uuid()) @db.Uuid
   name       String @unique
@@ -103,10 +104,12 @@ model TeamCategory {
   @@map("team_categories")
 }
 
-/// Drużyna: opiekun (nauczyciel) + uczniowie. Minimalny model pod KOALA-86,
-/// API tworzenia drużyn i kont uczniów to KOALA-80/81/82.
+/// Drużyna (KOALA-80): opiekun (nauczyciel) + uczniowie. Nauczyciel może
+/// prowadzić wiele drużyn, uczeń należy do jednej (User.teamId).
+/// Konta uczniów zakłada API drużyn (KOALA-81/82).
 model Team {
   id         String   @id @default(uuid()) @db.Uuid
+  /// Unikalna w obrębie nauczyciela (serwis sprawdza też bez wielkości liter).
   name       String
   categoryId String   @map("category_id") @db.Uuid
   teacherId  String   @map("teacher_id") @db.Uuid
@@ -117,6 +120,7 @@ model Team {
   teacher  User         @relation("TeamTeacher", fields: [teacherId], references: [id], onDelete: Cascade)
   students User[]       @relation("TeamStudents")
 
+  @@unique([teacherId, name])
   @@index([teacherId])
   @@map("teams")
 }
