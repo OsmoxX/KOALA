@@ -109,7 +109,7 @@ model TeamCategory {
 /// Konta uczniów zakłada API drużyn (KOALA-81/82).
 model Team {
   id         String   @id @default(uuid()) @db.Uuid
-  /// Unikalna w obrębie nauczyciela (serwis sprawdza też bez wielkości liter).
+  /// Unikalna w obrębie nauczyciela i kategorii (serwis sprawdza też bez wielkości liter).
   name       String
   categoryId String   @map("category_id") @db.Uuid
   teacherId  String   @map("teacher_id") @db.Uuid
@@ -120,7 +120,7 @@ model Team {
   teacher  User         @relation("TeamTeacher", fields: [teacherId], references: [id], onDelete: Cascade)
   students User[]       @relation("TeamStudents")
 
-  @@unique([teacherId, name])
+  @@unique([teacherId, categoryId, name])
   @@index([teacherId])
   @@map("teams")
 }

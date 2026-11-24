@@ -21,6 +21,7 @@ describe('Drużyny nauczyciela (e2e)', () => {
   let app: INestApplication<App>;
   let token: string;
   let categoryId: string;
+  let secondCategoryId: string;
 
   const http = () => request(app.getHttpServer());
   const auth = (t: string) => ({ Authorization: `Bearer ${t}` });
@@ -34,8 +35,8 @@ describe('Drużyny nauczyciela (e2e)', () => {
     return res.body.accessToken as string;
   }
 
-  const createTeam = (name = 'Pitagorejczycy', t = token) =>
-    http().post('/api/teams').set(auth(t)).send({ name, categoryId });
+  const createTeam = (name = 'Pitagorejczycy', t = token, catId = categoryId) =>
+    http().post('/api/teams').set(auth(t)).send({ name, categoryId: catId });
   const addStudent = (teamId: string, firstName: string, t = token) =>
     http()
       .post(`/api/teams/${teamId}/students`)
@@ -58,8 +59,9 @@ describe('Drużyny nauczyciela (e2e)', () => {
 
   beforeEach(async () => {
     await resetDatabase(app);
-    const { primary } = await createCategories(app);
+    const { primary, secondary } = await createCategories(app);
     categoryId = primary.id;
+    secondCategoryId = secondary.id;
     token = await teacherToken();
   });
 
@@ -125,10 +127,17 @@ describe('Drużyny nauczyciela (e2e)', () => {
       expect(res.body.message).toBe('Wybrana kategoria wiekowa nie istnieje.');
     });
 
-    it('nazwa jest unikalna u nauczyciela bez względu na wielkość liter (409)', async () => {
+    it('nazwa jest unikalna u nauczyciela w tej samej kategorii bez względu na wielkość liter (409)', async () => {
       await createTeam('Pitagorejczycy').expect(201);
       const res = await createTeam('PITAGOREJCZYCY').expect(409);
-      expect(res.body.message).toBe('Masz już drużynę o tej nazwie.');
+      expect(res.body.message).toBe(
+        'Masz już drużynę o tej nazwie w tej kategorii.',
+      );
+    });
+
+    it('ten sam nauczyciel może mieć dwie drużyny o tej samej nazwie w różnych kategoriach', async () => {
+      await createTeam('Pitagorejczycy', token, categoryId).expect(201);
+      await createTeam('Pitagorejczycy', token, secondCategoryId).expect(201);
     });
 
     it('inny nauczyciel może mieć drużynę o tej samej nazwie', async () => {
@@ -263,7 +272,25 @@ describe('Drużyny nauczyciela (e2e)', () => {
         .set(auth(token))
         .send({ name: 'DRUGA' })
         .expect(409);
-      expect(dup.body.message).toBe('Masz już drużynę o tej nazwie.');
+      expect(dup.body.message).toBe(
+        'Masz już drużynę o tej nazwie w tej kategorii.',
+      );
+    });
+
+    it('pozwala zmienić nazwę na taką samą jak drużyna w innej kategorii', async () => {
+      await createTeam('Pitagorejczycy', token, categoryId).expect(201);
+      const { body: otherCatTeam } = await createTeam(
+        'Inna',
+        token,
+        secondCategoryId,
+      ).expect(201);
+
+      const res = await http()
+        .patch(`/api/teams/${otherCatTeam.id}`)
+        .set(auth(token))
+        .send({ name: 'Pitagorejczycy' })
+        .expect(200);
+      expect(res.body.name).toBe('Pitagorejczycy');
     });
 
     it('usuwa drużynę razem z kontami wszystkich jej uczniów', async () => {

@@ -95,7 +95,7 @@ export class TeamsService {
     }));
   }
 
-  /** Nowa (pusta) drużyna; nazwa unikalna w obrębie nauczyciela. */
+  /** Nowa (pusta) drużyna; nazwa unikalna w obrębie nauczyciela i kategorii. */
   async createTeam(
     teacherId: string,
     dto: CreateTeamDto,
@@ -109,6 +109,7 @@ export class TeamsService {
     const duplicate = await this.prisma.team.findFirst({
       where: {
         teacherId,
+        categoryId: category.id,
         name: { equals: dto.name, mode: 'insensitive' },
       },
       select: { id: true },
@@ -232,7 +233,7 @@ export class TeamsService {
     }
   }
 
-  /** Zmienia nazwę drużyny (unikalna w obrębie nauczyciela). */
+  /** Zmienia nazwę drużyny (unikalna w obrębie nauczyciela i kategorii). */
   async updateTeam(
     teacherId: string,
     teamId: string,
@@ -240,7 +241,7 @@ export class TeamsService {
   ): Promise<TeamDetails> {
     const existing = await this.prisma.team.findFirst({
       where: { id: teamId, teacherId },
-      select: { id: true },
+      select: { id: true, categoryId: true },
     });
     if (!existing) {
       throw new TeamNotFoundException();
@@ -248,6 +249,7 @@ export class TeamsService {
     const duplicate = await this.prisma.team.findFirst({
       where: {
         teacherId,
+        categoryId: existing.categoryId,
         id: { not: teamId },
         name: { equals: dto.name, mode: 'insensitive' },
       },
@@ -342,7 +344,7 @@ export class StudentNotInTeamException extends NotFoundException {
 
 export class TeamNameTakenException extends ConflictException {
   constructor() {
-    super('Masz już drużynę o tej nazwie.');
+    super('Masz już drużynę o tej nazwie w tej kategorii.');
   }
 }
 

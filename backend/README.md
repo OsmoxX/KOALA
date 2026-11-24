@@ -30,9 +30,9 @@ Bez `RESEND_API_KEY` e-maile nie są wysyłane, tylko wypisywane w logach serwer
 | `GET /api/students/me` | Profil ucznia: dane, drużyna, szkoła, kategoria, członkowie (tylko rola STUDENT) |
 | `GET /api/teams/categories` | Kategorie wiekowe z limitami składu `minMembers`–`maxMembers` (nauczyciel) |
 | `GET /api/teams` | Drużyny zalogowanego nauczyciela (`id`, `name`, `categoryName`, `studentsCount`) |
-| `POST /api/teams` | `{ name, categoryId }` – nowa drużyna; nazwa unikalna u nauczyciela (409) |
+| `POST /api/teams` | `{ name, categoryId }` – nowa drużyna; nazwa unikalna u nauczyciela w ramach kategorii (409) |
 | `GET /api/teams/:id` | Szczegóły drużyny: skład (`students`: imię i login) oraz limity kategorii |
-| `PATCH /api/teams/:id` | `{ name }` – zmiana nazwy drużyny; nazwa unikalna u nauczyciela (409) |
+| `PATCH /api/teams/:id` | `{ name }` – zmiana nazwy drużyny; nazwa unikalna u nauczyciela w ramach kategorii (409) |
 | `DELETE /api/teams/:id` | Usuwa drużynę razem z kontami wszystkich jej uczniów (204) |
 | `POST /api/teams/:id/students` | `{ firstName }` – zakłada konto ucznia, zwraca `login` i `temporaryPassword` (tylko raz); ponad `maxMembers` – 409 |
 | `DELETE /api/teams/:id/students/:studentId` | Usuwa ucznia razem z kontem (204) |
