@@ -65,8 +65,7 @@ export default function DashboardPage() {
 
     try {
       await logoutTeacher();
-      router.replace("/login");
-      router.refresh();
+      window.location.assign("/login");
     } catch {
       setError("Nie udało się wylogować.");
       setLoggingOut(false);
