@@ -19,8 +19,13 @@ export default function StudentPasswordForm({ firstLogin }: Props) {
 
   return <div className={s.page}>
     <header className={s.nav}>
-      <Link href="/" className={s.logo}>KOALA</Link>
+      {firstLogin ? (
+        <span className={s.logo}>KOALA</span>
+      ) : (
+        <Link href="/student/dashboard" className={s.logo}>KOALA</Link>
+      )}
       <nav className={s.navLinks}>
+        {!firstLogin && <Link href="/student/dashboard">Moja drużyna</Link>}
         <LogoutButton kind="student" className={s.logoutButton} onError={setError} />
       </nav>
     </header>
