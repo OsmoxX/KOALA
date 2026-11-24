@@ -40,6 +40,14 @@ export class UsersService {
     return this.prisma.user.findUnique({ where: { id } });
   }
 
+  /** Nowe hasło wybrane przez użytkownika – kończy tryb hasła jednorazowego. */
+  async updatePassword(id: string, passwordHash: string): Promise<void> {
+    await this.prisma.user.update({
+      where: { id },
+      data: { passwordHash, mustChangePassword: false },
+    });
+  }
+
   async createTeacher(input: CreateTeacherInput): Promise<User> {
     try {
       return await this.prisma.user.create({

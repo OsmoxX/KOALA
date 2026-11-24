@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -13,6 +14,7 @@ import {
 } from '../users/users.service.js';
 import { Role, type User } from '../generated/prisma/client.js';
 import type { LoginDto } from './dto/login.dto.js';
+import type { ChangePasswordDto } from './dto/password.dto.js';
 import type { StudentLoginDto } from './dto/student-login.dto.js';
 import { EmailVerificationService } from './email-verification.service.js';
 import type { RegisterTeacherDto } from './dto/register-teacher.dto.js';
@@ -135,6 +137,32 @@ export class AuthService {
       ...(user.mustChangePassword ? { pwdChange: true } : {}),
     };
     return this.jwt.signAsync(payload);
+  }
+
+  /**
+   * Zmiana hasła po zalogowaniu (m.in. wymuszona zmiana hasła jednorazowego
+   * ucznia przy pierwszym logowaniu – KOALA-14).
+   */
+  async changePassword(
+    authUser: AuthUser,
+    dto: ChangePasswordDto,
+  ): Promise<void> {
+    const user = await this.users.findById(authUser.sub);
+    if (
+      !user ||
+      !(await verifyPassword(user.passwordHash, dto.currentPassword))
+    ) {
+      throw new BadRequestException('Aktualne hasło jest nieprawidłowe.');
+    }
+    if (dto.newPassword === dto.currentPassword) {
+      throw new BadRequestException(
+        'Nowe hasło musi różnić się od poprzedniego.',
+      );
+    }
+    await this.users.updatePassword(
+      user.id,
+      await hashPassword(dto.newPassword),
+    );
   }
 
   verifyEmail(token: string): Promise<void> {

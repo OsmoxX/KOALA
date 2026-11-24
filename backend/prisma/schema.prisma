@@ -49,9 +49,17 @@ model User {
   createdAt          DateTime  @default(now()) @map("created_at")
   updatedAt          DateTime  @updatedAt @map("updated_at")
 
+  /// Drużyna ucznia (tylko rola STUDENT).
+  teamId String? @map("team_id") @db.Uuid
+
   teacherProfile          TeacherProfile?
   emailVerificationTokens EmailVerificationToken[]
+  passwordResetTokens     PasswordResetToken[]
+  team                    Team?                    @relation("TeamStudents", fields: [teamId], references: [id], onDelete: SetNull)
+  /// Drużyny, których użytkownik jest opiekunem (rola TEACHER).
+  teamsAsTeacher          Team[]                   @relation("TeamTeacher")
 
+  @@index([teamId])
   @@map("users")
 }
 
@@ -80,4 +88,52 @@ model EmailVerificationToken {
 
   @@index([userId])
   @@map("email_verification_tokens")
+}
+
+/// Kategoria wiekowa drużyny z limitem liczby uczniów (wg regulaminu).
+/// Minimalny model na potrzeby profilu ucznia (KOALA-86) – rozwijany w KOALA-80.
+model TeamCategory {
+  id         String @id @default(uuid()) @db.Uuid
+  name       String @unique
+  minMembers Int    @map("min_members")
+  maxMembers Int    @map("max_members")
+
+  teams Team[]
+
+  @@map("team_categories")
+}
+
+/// Drużyna: opiekun (nauczyciel) + uczniowie. Minimalny model pod KOALA-86,
+/// API tworzenia drużyn i kont uczniów to KOALA-80/81/82.
+model Team {
+  id         String   @id @default(uuid()) @db.Uuid
+  name       String
+  categoryId String   @map("category_id") @db.Uuid
+  teacherId  String   @map("teacher_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  category TeamCategory @relation(fields: [categoryId], references: [id])
+  teacher  User         @relation("TeamTeacher", fields: [teacherId], references: [id], onDelete: Cascade)
+  students User[]       @relation("TeamStudents")
+
+  @@index([teacherId])
+  @@map("teams")
+}
+
+/// Jednorazowy token resetu hasła (KOALA-86). Jak przy weryfikacji e-mail
+/// trzymamy tylko skrót SHA-256 tokenu.
+model PasswordResetToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  /// Konto, którego hasło zostanie zmienione (np. uczeń – mail idzie do opiekuna).
+  userId    String    @map("user_id") @db.Uuid
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("password_reset_tokens")
 }
