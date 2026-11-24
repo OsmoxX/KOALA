@@ -34,6 +34,8 @@ export class EmailVerificationService {
    * użytkownik może poprosić o ponowne wysłanie.
    */
   async sendVerificationEmail(user: User): Promise<void> {
+    if (!user.email) return; // np. konto ucznia – nie ma czego weryfikować
+    const { email } = user;
     const token = randomBytes(32).toString('base64url');
     await this.prisma.$transaction([
       this.prisma.emailVerificationToken.deleteMany({
@@ -52,7 +54,7 @@ export class EmailVerificationService {
     try {
       await this.mail.send(
         verifyEmailMessage({
-          to: user.email,
+          to: email,
           firstName: user.firstName,
           link,
           expiresInHours: this.ttlHours,

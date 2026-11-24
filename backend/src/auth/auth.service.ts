@@ -11,7 +11,9 @@ import {
   toPublicUser,
   UsersService,
 } from '../users/users.service.js';
+import { Role, type User } from '../generated/prisma/client.js';
 import type { LoginDto } from './dto/login.dto.js';
+import type { StudentLoginDto } from './dto/student-login.dto.js';
 import { EmailVerificationService } from './email-verification.service.js';
 import type { RegisterTeacherDto } from './dto/register-teacher.dto.js';
 import type { AuthUser, JwtPayload } from './jwt-payload.js';
@@ -20,7 +22,16 @@ import { hashPassword, verifyPassword } from './password.js';
 export interface LoginResult {
   accessToken: string;
   tokenType: 'Bearer';
+  /** true – trzeba najpierw zmienić hasło jednorazowe (token ma ograniczony dostęp). */
+  mustChangePassword: boolean;
   user: PublicUser;
+}
+
+export interface StudentLoginResult {
+  accessToken: string;
+  tokenType: 'Bearer';
+  mustChangePassword: boolean;
+  user: { id: string; firstName: string; login: string; role: Role };
 }
 
 @Injectable()
@@ -53,13 +64,11 @@ export class AuthService {
 
   /** Logowanie e-mailem i hasłem; zwraca token dostępowy JWT. */
   async login(dto: LoginDto): Promise<LoginResult> {
-    const user = await this.users.findByEmail(dto.email);
+    const user = await this.checkPassword(
+      await this.users.findByEmail(dto.email),
+      dto.password,
+    );
     if (!user) {
-      this.dummyHash ??= hashPassword('koala-dummy-password');
-      await verifyPassword(await this.dummyHash, dto.password);
-      throw new InvalidCredentialsException();
-    }
-    if (!(await verifyPassword(user.passwordHash, dto.password))) {
       throw new InvalidCredentialsException();
     }
     if (!user.emailVerifiedAt) {
@@ -67,17 +76,65 @@ export class AuthService {
         'Konto nie jest aktywne. Potwierdź adres e-mail, klikając link z wiadomości.',
       );
     }
-
-    const payload: JwtPayload = {
-      sub: user.id,
-      email: user.email,
-      role: user.role,
-    };
     return {
-      accessToken: await this.jwt.signAsync(payload),
+      accessToken: await this.issueToken(user),
       tokenType: 'Bearer',
+      mustChangePassword: user.mustChangePassword,
       user: toPublicUser(user),
     };
+  }
+
+  /**
+   * Logowanie ucznia loginem i hasłem od nauczyciela (KOALA-14, KOALA-85).
+   * Przy haśle jednorazowym token pozwala tylko na zmianę hasła.
+   */
+  async loginStudent(dto: StudentLoginDto): Promise<StudentLoginResult> {
+    const found = await this.users.findByLogin(dto.login);
+    const user = await this.checkPassword(
+      found?.role === Role.STUDENT ? found : null,
+      dto.password,
+    );
+    if (!user?.login) {
+      throw new InvalidStudentCredentialsException();
+    }
+    return {
+      accessToken: await this.issueToken(user),
+      tokenType: 'Bearer',
+      mustChangePassword: user.mustChangePassword,
+      user: {
+        id: user.id,
+        firstName: user.firstName,
+        login: user.login,
+        role: user.role,
+      },
+    };
+  }
+
+  /**
+   * Sprawdza hasło. Gdy konta nie ma, i tak liczy skrót, żeby czas
+   * odpowiedzi nie zdradzał, czy e-mail/login istnieje.
+   */
+  private async checkPassword(
+    user: User | null,
+    password: string,
+  ): Promise<User | null> {
+    if (!user) {
+      this.dummyHash ??= hashPassword('koala-dummy-password');
+      await verifyPassword(await this.dummyHash, password);
+      return null;
+    }
+    return (await verifyPassword(user.passwordHash, password)) ? user : null;
+  }
+
+  private issueToken(user: User): Promise<string> {
+    const payload: JwtPayload = {
+      sub: user.id,
+      role: user.role,
+      email: user.email,
+      login: user.login,
+      ...(user.mustChangePassword ? { pwdChange: true } : {}),
+    };
+    return this.jwt.signAsync(payload);
   }
 
   verifyEmail(token: string): Promise<void> {
@@ -104,5 +161,11 @@ export class AuthService {
 export class InvalidCredentialsException extends UnauthorizedException {
   constructor() {
     super('Nieprawidłowy e-mail lub hasło.');
+  }
+}
+
+export class InvalidStudentCredentialsException extends UnauthorizedException {
+  constructor() {
+    super('Nieprawidłowy login lub hasło.');
   }
 }

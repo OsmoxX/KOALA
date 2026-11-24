@@ -8,15 +8,21 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import type { PublicUser } from '../users/users.service.js';
-import { AuthService, type LoginResult } from './auth.service.js';
+import {
+  AuthService,
+  type LoginResult,
+  type StudentLoginResult,
+} from './auth.service.js';
 import { CurrentUser } from './current-user.decorator.js';
 import { LoginDto } from './dto/login.dto.js';
+import { StudentLoginDto } from './dto/student-login.dto.js';
 import {
   ResendVerificationDto,
   VerifyEmailDto,
 } from './dto/verify-email.dto.js';
 import { RegisterTeacherDto } from './dto/register-teacher.dto.js';
 import { JwtAuthGuard } from './jwt-auth.guard.js';
+import { AllowPendingPasswordChange } from './roles.decorator.js';
 import type { AuthUser } from './jwt-payload.js';
 
 @Controller('auth')
@@ -35,6 +41,13 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   login(@Body() dto: LoginDto): Promise<LoginResult> {
     return this.auth.login(dto);
+  }
+
+  /** POST /api/auth/student/login – logowanie ucznia loginem i hasłem. */
+  @Post('student/login')
+  @HttpCode(HttpStatus.OK)
+  loginStudent(@Body() dto: StudentLoginDto): Promise<StudentLoginResult> {
+    return this.auth.loginStudent(dto);
   }
 
   /** POST /api/auth/verify-email – aktywacja konta tokenem z linku. */
@@ -60,9 +73,10 @@ export class AuthController {
     };
   }
 
-  /** GET /api/auth/me – dane zalogowanego użytkownika. */
+  /** GET /api/auth/me – dane zalogowanego użytkownika (dowolna rola). */
   @Get('me')
   @UseGuards(JwtAuthGuard)
+  @AllowPendingPasswordChange()
   me(@CurrentUser() user: AuthUser): Promise<PublicUser> {
     return this.auth.me(user);
   }

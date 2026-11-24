@@ -27,20 +27,27 @@ enum Role {
 
 /// Wspólne konto logowania dla wszystkich ról.
 model User {
-  id              String    @id @default(uuid()) @db.Uuid
+  id                 String    @id @default(uuid()) @db.Uuid
   /// Zawsze zapisywany małymi literami, unikalny w całym systemie.
-  email           String    @unique
+  /// Uczniowie nie mają e-maila (logują się loginem), stąd pole opcjonalne.
+  email              String?   @unique
+  /// Login ucznia nadawany przy zakładaniu konta (małe litery, unikalny).
+  /// Nauczyciele i pozostałe role logują się e-mailem, więc u nich null.
+  login              String?   @unique
   /// Skrót Argon2id, nigdy samo hasło (NFR-02).
-  passwordHash    String    @map("password_hash")
-  role            Role
-  firstName       String    @map("first_name")
-  lastName        String    @map("last_name")
+  passwordHash       String    @map("password_hash")
+  /// Hasło jednorazowe (np. nadane uczniowi przez system) – przy logowaniu
+  /// trzeba je zmienić na własne, zanim reszta API będzie dostępna.
+  mustChangePassword Boolean   @default(false) @map("must_change_password")
+  role               Role
+  firstName          String    @map("first_name")
+  lastName           String    @map("last_name")
   /// Ustawiane po kliknięciu linku weryfikacyjnego; do tego czasu konto jest nieaktywne.
-  emailVerifiedAt DateTime? @map("email_verified_at")
+  emailVerifiedAt    DateTime? @map("email_verified_at")
   /// Akceptacja regulaminu i informacji o przetwarzaniu danych (FR-07, RODO).
-  termsAcceptedAt DateTime? @map("terms_accepted_at")
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
+  termsAcceptedAt    DateTime? @map("terms_accepted_at")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
 
   teacherProfile          TeacherProfile?
   emailVerificationTokens EmailVerificationToken[]

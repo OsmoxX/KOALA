@@ -29,6 +29,13 @@ export class UsersService {
     });
   }
 
+  /** Konto po loginie ucznia (bez rozróżniania wielkości liter). */
+  findByLogin(login: string): Promise<User | null> {
+    return this.prisma.user.findUnique({
+      where: { login: login.trim().toLowerCase() },
+    });
+  }
+
   findById(id: string): Promise<User | null> {
     return this.prisma.user.findUnique({ where: { id } });
   }
