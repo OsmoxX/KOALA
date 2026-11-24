@@ -195,6 +195,12 @@ export default function LoginPage() {
         </form>
 
         <p className="auth-footer">
+          <Link href="/nie-pamietam-hasla">
+            Nie pamiętasz hasła?
+          </Link>
+        </p>
+
+        <p className="auth-footer">
           Nie masz konta?{' '}
           <Link href="/register">
             Zarejestruj się
