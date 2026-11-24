@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { apiJson } from "@/lib/koala-client";
 import type { TeamSummary } from "@/lib/koala-types";
+import { LogoutButton } from "@/components/logout-button";
 import s from "@/app/management.module.css";
 
 export default function TeamsPage() {
@@ -27,7 +28,10 @@ export default function TeamsPage() {
     <div className={s.page}>
       <header className={s.nav}>
         <Link href="/dashboard" className={s.logo}>KOALA</Link>
-        <nav className={s.navLinks}><Link href="/dashboard">Panel nauczyciela</Link><Link href="/dashboard/teams">Drużyny</Link></nav>
+        <nav className={s.navLinks}>
+          <Link href="/dashboard">Panel nauczyciela</Link>
+          <LogoutButton className={s.logoutButton} onError={setError} />
+        </nav>
       </header>
       <main className={s.main}>
         <div className={s.top}>

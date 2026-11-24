@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { apiJson } from "@/lib/koala-client";
 import type { StudentCredentials, TeamDetails } from "@/lib/koala-types";
+import { LogoutButton } from "@/components/logout-button";
 import s from "@/app/management.module.css";
 
 export default function TeamDetailsPage() {
@@ -43,7 +44,13 @@ function TeamDetailsContent() {
 
   return (
     <div className={s.page}>
-      <header className={s.nav}><Link href="/dashboard" className={s.logo}>KOALA</Link><nav className={s.navLinks}><Link href="/dashboard/teams">Moje drużyny</Link></nav></header>
+      <header className={s.nav}>
+        <Link href="/dashboard" className={s.logo}>KOALA</Link>
+        <nav className={s.navLinks}>
+          <Link href="/dashboard/teams">Moje drużyny</Link>
+          <LogoutButton className={s.logoutButton} onError={setError} />
+        </nav>
+      </header>
       <main className={s.main}>
         <Link href="/dashboard/teams" className={s.back}>← Wróć do drużyn</Link>
         {loading && <p>Ładowanie...</p>}

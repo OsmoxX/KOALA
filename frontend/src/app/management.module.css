@@ -22,6 +22,9 @@
 .secondaryButton { background: #fff; color: #718bd0; border: 1px solid #87a1e6; }
 .secondaryButton:hover { background: #e7e9f5; text-decoration: none; }
 .button:disabled, .secondaryButton:disabled { opacity: .6; cursor: not-allowed; }
+.logoutButton { padding: 11px 20px; border: 1px solid #87a1e6; border-radius: 9px; background: #ffffff; color: #87a1e6; font: inherit; font-weight: 600; cursor: pointer; }
+.logoutButton:hover { background: #e7e9f5; }
+.logoutButton:disabled { opacity: 0.6; cursor: not-allowed; }
 .form { display: grid; gap: 16px; max-width: 580px; }
 .field { display: grid; gap: 6px; font-weight: 600; }
 .input, .select { width: 100%; border-radius: 8px; border: 1px solid #a3afba; background: #fff; color: #233b32; padding: 12px; font: inherit; }

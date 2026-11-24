@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { apiJson } from "@/lib/koala-client";
 import type { TeamCategory, TeamSummary } from "@/lib/koala-types";
+import { LogoutButton } from "@/components/logout-button";
 import s from "@/app/management.module.css";
 
 export default function NewTeamPage() {
@@ -30,7 +31,13 @@ export default function NewTeamPage() {
 
   return (
     <div className={s.page}>
-      <header className={s.nav}><Link href="/dashboard" className={s.logo}>KOALA</Link><nav className={s.navLinks}><Link href="/dashboard/teams">Moje drużyny</Link></nav></header>
+      <header className={s.nav}>
+        <Link href="/dashboard" className={s.logo}>KOALA</Link>
+        <nav className={s.navLinks}>
+          <Link href="/dashboard/teams">Moje drużyny</Link>
+          <LogoutButton className={s.logoutButton} onError={setError} />
+        </nav>
+      </header>
       <main className={s.main}>
         <Link href="/dashboard/teams" className={s.back}>← Wróć do drużyn</Link>
         <div className={s.top} style={{ marginTop: 20 }}><div><div className={s.eyebrow}>Panel nauczyciela</div><h1 className={s.title}>Nowa drużyna</h1><p className={s.subtitle}>Podaj nazwę i wybierz kategorię wiekową.</p></div></div>

@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { apiJson } from "@/lib/koala-client";
+import { LogoutButton } from "@/components/logout-button";
 import s from "@/app/management.module.css";
 
 type Props = { firstLogin: boolean };
@@ -17,7 +18,12 @@ export default function StudentPasswordForm({ firstLogin }: Props) {
   const [saving, setSaving] = useState(false);
 
   return <div className={s.page}>
-    <header className={s.nav}><Link href="/" className={s.logo}>KOALA</Link></header>
+    <header className={s.nav}>
+      <Link href="/" className={s.logo}>KOALA</Link>
+      <nav className={s.navLinks}>
+        <LogoutButton kind="student" className={s.logoutButton} onError={setError} />
+      </nav>
+    </header>
     <main className={s.main} style={{ maxWidth: 620 }}>
       <section className={s.card}>
         <div className={s.eyebrow}>Strefa ucznia</div>

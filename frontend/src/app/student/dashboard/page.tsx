@@ -1,14 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { apiJson } from "@/lib/koala-client";
 import type { StudentProfile } from "@/lib/koala-types";
+import { LogoutButton } from "@/components/logout-button";
 import s from "@/app/management.module.css";
 
 export default function StudentDashboardPage() {
-  const router = useRouter();
   const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -30,10 +29,7 @@ export default function StudentDashboardPage() {
         <span className={s.muted}>Ranking (wkrótce)</span>
         <Link href="/student/dashboard">Moja drużyna</Link>
         <Link href="/student/change-password">Zmień hasło</Link>
-        <button className={s.secondaryButton} onClick={async () => {
-          try { await apiJson<unknown>("/api/student/logout", { method: "POST", body: "{}" }); }
-          finally { router.replace("/student/login"); }
-        }}>Wyloguj</button>
+        <LogoutButton kind="student" className={s.logoutButton} onError={setError} />
       </nav>
     </header>
     <main className={s.main}>
@@ -46,7 +42,7 @@ export default function StudentDashboardPage() {
           <h2>Skład drużyny</h2>
           {profile.team.members.length === 0 ? <p className={s.muted}>Brak członków w danych z API.</p> :
             profile.team.members.map((member) => <div key={member.id} className={s.member}>{member.firstName}</div>)}
-          <h2 style={{marginTop: 24}}>Zadania</h2>
+          <h2 style={{ marginTop: 24 }}>Zadania</h2>
           {!profile.tasks ? (
             <p className={s.muted}>Endpoint profilu nie udostępnia jeszcze zadań.</p>
           ) : profile.tasks.length === 0 ? (
