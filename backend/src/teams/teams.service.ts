@@ -3,11 +3,16 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { Prisma, Role } from '../generated/prisma/client.js';
 import { hashPassword } from '../auth/password.js';
 import { PrismaService } from '../prisma/prisma.service.js';
-import type { AddStudentDto, CreateTeamDto } from './dto/team.dto.js';
+import type {
+  AddStudentDto,
+  CreateTeamDto,
+  UpdateTeamDto,
+} from './dto/team.dto.js';
 import {
   generateStudentLogin,
   generateTemporaryPassword,
@@ -126,6 +131,14 @@ export class TeamsService {
       if (isUniqueViolation(error)) {
         throw new TeamNameTakenException();
       }
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2003'
+      ) {
+        throw new UnauthorizedException(
+          'Sesja wygasła lub konto nie istnieje. Zaloguj się ponownie.',
+        );
+      }
       throw error;
     }
   }
@@ -217,6 +230,61 @@ export class TeamsService {
         throw error;
       }
     }
+  }
+
+  /** Zmienia nazwę drużyny (unikalna w obrębie nauczyciela). */
+  async updateTeam(
+    teacherId: string,
+    teamId: string,
+    dto: UpdateTeamDto,
+  ): Promise<TeamDetails> {
+    const existing = await this.prisma.team.findFirst({
+      where: { id: teamId, teacherId },
+      select: { id: true },
+    });
+    if (!existing) {
+      throw new TeamNotFoundException();
+    }
+    const duplicate = await this.prisma.team.findFirst({
+      where: {
+        teacherId,
+        id: { not: teamId },
+        name: { equals: dto.name, mode: 'insensitive' },
+      },
+      select: { id: true },
+    });
+    if (duplicate) {
+      throw new TeamNameTakenException();
+    }
+    try {
+      await this.prisma.team.update({
+        where: { id: teamId },
+        data: { name: dto.name },
+      });
+      return this.getTeam(teacherId, teamId);
+    } catch (error) {
+      if (isUniqueViolation(error)) {
+        throw new TeamNameTakenException();
+      }
+      throw error;
+    }
+  }
+
+  /** Usuwa drużynę razem z kontami wszystkich jej uczniów. */
+  async deleteTeam(teacherId: string, teamId: string): Promise<void> {
+    await this.prisma.$transaction(async (tx) => {
+      const team = await tx.team.findFirst({
+        where: { id: teamId, teacherId },
+        select: { id: true },
+      });
+      if (!team) {
+        throw new TeamNotFoundException();
+      }
+      await tx.user.deleteMany({
+        where: { teamId: team.id, role: Role.STUDENT },
+      });
+      await tx.team.delete({ where: { id: team.id } });
+    });
   }
 
   /** Usuwa ucznia z drużyny razem z jego kontem (login się zwalnia). */

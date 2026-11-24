@@ -7,6 +7,7 @@ import {
   HttpStatus,
   Param,
   ParseUUIDPipe,
+  Patch,
   Post,
   UseGuards,
 } from '@nestjs/common';
@@ -15,7 +16,7 @@ import { CurrentUser } from '../auth/current-user.decorator.js';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard.js';
 import type { AuthUser } from '../auth/jwt-payload.js';
 import { Roles } from '../auth/roles.decorator.js';
-import { AddStudentDto, CreateTeamDto } from './dto/team.dto.js';
+import { AddStudentDto, CreateTeamDto, UpdateTeamDto } from './dto/team.dto.js';
 import {
   type StudentCredentials,
   StudentNotInTeamException,
@@ -70,6 +71,26 @@ export class TeamsController {
     @Param('id', TeamIdPipe) id: string,
   ): Promise<TeamDetails> {
     return this.teams.getTeam(user.sub, id);
+  }
+
+  /** PATCH /api/teams/:id – zmiana nazwy drużyny `{ name }`. */
+  @Patch(':id')
+  update(
+    @CurrentUser() user: AuthUser,
+    @Param('id', TeamIdPipe) id: string,
+    @Body() dto: UpdateTeamDto,
+  ): Promise<TeamDetails> {
+    return this.teams.updateTeam(user.sub, id, dto);
+  }
+
+  /** DELETE /api/teams/:id – usuwa drużynę i konta wszystkich jej uczniów. */
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  remove(
+    @CurrentUser() user: AuthUser,
+    @Param('id', TeamIdPipe) id: string,
+  ): Promise<void> {
+    return this.teams.deleteTeam(user.sub, id);
   }
 
   /**

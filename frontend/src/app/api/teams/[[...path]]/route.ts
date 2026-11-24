@@ -12,7 +12,7 @@ async function handle(request: NextRequest, context: Context) {
   const allowed =
     (path.length === 0 && ["GET", "POST"].includes(method)) ||
     (path.length === 1 && path[0] === "categories" && method === "GET") ||
-    (path.length === 1 && safeId(path[0]) && method === "GET") ||
+    (path.length === 1 && safeId(path[0]) && ["GET", "PATCH", "DELETE"].includes(method)) ||
     (path.length === 2 && safeId(path[0]) && path[1] === "students" && method === "POST") ||
     (path.length === 3 && safeId(path[0]) && path[1] === "students" && safeId(path[2]) && method === "DELETE");
 
@@ -33,6 +33,10 @@ export async function GET(request: NextRequest, context: Context) {
 }
 
 export async function POST(request: NextRequest, context: Context) {
+  return handle(request, context);
+}
+
+export async function PATCH(request: NextRequest, context: Context) {
   return handle(request, context);
 }
 

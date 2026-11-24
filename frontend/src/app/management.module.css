@@ -36,6 +36,16 @@
 .memberRow { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
 .memberInfo { min-width: 0; overflow-wrap: anywhere; }
 .memberAction { flex-shrink: 0; }
+.titleRow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.titleRow .title { margin-bottom: 0; }
+.titleInput { background: transparent; border: 0; border-bottom: 2px solid #87a1e6; border-radius: 0; padding: 0 2px 2px; font: inherit; font-size: 32px; font-weight: 700; color: #233b32; outline: none; min-width: 180px; max-width: 100%; }
+.titleInput:disabled { opacity: .6; }
+.iconButton { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; padding: 0; border: 0; border-radius: 8px; background: transparent; cursor: pointer; transition: background .15s ease, color .15s ease; }
+.iconButton:disabled { opacity: .5; cursor: not-allowed; }
+.editIconButton { color: #87a1e6; }
+.editIconButton:hover:not(:disabled) { background: #e7e9f5; color: #718bd0; }
+.deleteIconButton { color: #b62a2a; }
+.deleteIconButton:hover:not(:disabled) { background: #fceaea; color: #992828; }
 .label { color: #617068; font-size: 13px; margin: 0 0 5px; }
 .value { font-weight: 700; margin: 0 0 14px; overflow-wrap: anywhere; }
 .pill { display: inline-block; color: #718bd0; background: #e7e9f5; border-radius: 999px; padding: 5px 11px; font-size: 13px; font-weight: 700; }

@@ -224,6 +224,86 @@ describe('Drużyny nauczyciela (e2e)', () => {
     });
   });
 
+  describe('edycja i usuwanie drużyny', () => {
+    it('zmienia nazwę drużyny i pozwala na zmianę wielkości liter', async () => {
+      const teamId = await teamWithStudents(['Ola']);
+      const renamed = await http()
+        .patch(`/api/teams/${teamId}`)
+        .set(auth(token))
+        .send({ name: '  Nowa Nazwa  ' })
+        .expect(200);
+      expect(renamed.body.name).toBe('Nowa Nazwa');
+      expect(renamed.body.studentsCount).toBe(1);
+
+      const recased = await http()
+        .patch(`/api/teams/${teamId}`)
+        .set(auth(token))
+        .send({ name: 'nowa nazwa' })
+        .expect(200);
+      expect(recased.body.name).toBe('nowa nazwa');
+    });
+
+    it('odrzuca pustą, za długą lub zduplikowaną nazwę drużyny (400/409)', async () => {
+      const teamA = await teamWithStudents([]);
+      await createTeam('Druga').expect(201);
+
+      await http()
+        .patch(`/api/teams/${teamA}`)
+        .set(auth(token))
+        .send({ name: '   ' })
+        .expect(400);
+      await http()
+        .patch(`/api/teams/${teamA}`)
+        .set(auth(token))
+        .send({ name: 'x'.repeat(101) })
+        .expect(400);
+
+      const dup = await http()
+        .patch(`/api/teams/${teamA}`)
+        .set(auth(token))
+        .send({ name: 'DRUGA' })
+        .expect(409);
+      expect(dup.body.message).toBe('Masz już drużynę o tej nazwie.');
+    });
+
+    it('usuwa drużynę razem z kontami wszystkich jej uczniów', async () => {
+      const { body: team } = await createTeam().expect(201);
+      const ola = await addStudent(team.id, 'Ola').expect(201);
+      const bartek = await addStudent(team.id, 'Bartek').expect(201);
+
+      await http().delete(`/api/teams/${team.id}`).set(auth(token)).expect(204);
+
+      await getTeam(team.id).expect(404);
+      const list = await http().get('/api/teams').set(auth(token)).expect(200);
+      expect(list.body).toEqual([]);
+
+      await http()
+        .post('/api/auth/student/login')
+        .send({ login: ola.body.login, password: ola.body.temporaryPassword })
+        .expect(401);
+      await http()
+        .post('/api/auth/student/login')
+        .send({
+          login: bartek.body.login,
+          password: bartek.body.temporaryPassword,
+        })
+        .expect(401);
+    });
+
+    it('nauczyciel nie zmieni ani nie usunie cudzej drużyny (404)', async () => {
+      const teamId = await teamWithStudents(['Ola']);
+      const other = await teacherToken('inny@example.com');
+
+      await http()
+        .patch(`/api/teams/${teamId}`)
+        .set(auth(other))
+        .send({ name: 'Przejęta' })
+        .expect(404);
+      await http().delete(`/api/teams/${teamId}`).set(auth(other)).expect(404);
+      expect((await getTeam(teamId)).body.name).toBe('Pitagorejczycy');
+    });
+  });
+
   describe('usuwanie uczniów', () => {
     it('usuwa ucznia razem z kontem', async () => {
       const { body: team } = await createTeam().expect(201);

@@ -1,8 +1,7 @@
 "use client";
-import { Suspense } from "react";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { apiJson } from "@/lib/koala-client";
 import type { StudentCredentials, TeamDetails } from "@/lib/koala-types";
 import { LogoutButton } from "@/components/logout-button";
@@ -18,9 +17,16 @@ export default function TeamDetailsPage() {
 
 function TeamDetailsContent() {
   const { id } = useParams<{ id: string }>();
+  const router = useRouter();
   const [team, setTeam] = useState<TeamDetails | null>(null);
   const [firstName, setFirstName] = useState("");
   const [credentials, setCredentials] = useState<StudentCredentials | null>(null);
+  const [editingName, setEditingName] = useState(false);
+  const [teamName, setTeamName] = useState("");
+  const [renaming, setRenaming] = useState(false);
+  const skipBlurRef = useRef(false);
+  const renamingRef = useRef(false);
+  const [deletingTeam, setDeletingTeam] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);
@@ -29,6 +35,39 @@ function TeamDetailsContent() {
   async function loadTeam() {
     const data = await apiJson<TeamDetails>(`/api/teams/${encodeURIComponent(id)}`);
     setTeam(data);
+  }
+
+  async function commitRename() {
+    if (skipBlurRef.current) {
+      skipBlurRef.current = false;
+      return;
+    }
+    if (renamingRef.current || !team) return;
+
+    const trimmed = teamName.trim();
+    if (!trimmed || trimmed === team.name) {
+      setEditingName(false);
+      return;
+    }
+
+    renamingRef.current = true;
+    setRenaming(true);
+    setError("");
+    try {
+      const updated = await apiJson<TeamDetails>(`/api/teams/${encodeURIComponent(id)}`, {
+        method: "PATCH",
+        body: JSON.stringify({ name: trimmed }),
+        keepalive: true,
+      });
+      setTeam(updated);
+      setEditingName(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Nie udało się zmienić nazwy drużyny.");
+      setEditingName(false);
+    } finally {
+      renamingRef.current = false;
+      setRenaming(false);
+    }
   }
 
   useEffect(() => {
@@ -56,7 +95,86 @@ function TeamDetailsContent() {
         {loading && <p>Ładowanie...</p>}
         {error && <div role="alert" className={s.error}>{error}</div>}
         {team && <>
-          <div className={s.top} style={{ marginTop: 20 }}><div><div className={s.eyebrow}>Zarządzanie drużyną</div><h1 className={s.title}>{team.name}</h1><p className={s.subtitle}>{team.categoryName}</p></div><span className={s.pill}>{team.students.length} / {team.maxMembers} uczniów</span></div>
+          <div className={s.top} style={{ marginTop: 20 }}>
+            <div>
+              <div className={s.eyebrow}>Zarządzanie drużyną</div>
+              <div className={s.titleRow}>
+                {editingName ? (
+                  <input
+                    className={s.titleInput}
+                    aria-label="Nazwa drużyny"
+                    value={teamName}
+                    size={Math.max(12, teamName.length + 1)}
+                    onChange={(event) => setTeamName(event.target.value)}
+                    onBlur={() => void commitRename()}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        void commitRename();
+                      } else if (event.key === "Escape") {
+                        skipBlurRef.current = true;
+                        setEditingName(false);
+                        setError("");
+                      }
+                    }}
+                    disabled={renaming}
+                    maxLength={100}
+                    autoFocus
+                  />
+                ) : (
+                  <>
+                    <h1 className={s.title}>{team.name}</h1>
+                    <button
+                      className={`${s.iconButton} ${s.editIconButton}`}
+                      type="button"
+                      aria-label="Zmień nazwę drużyny"
+                      title="Zmień nazwę drużyny"
+                      disabled={deletingTeam || removingId !== null}
+                      onClick={() => {
+                        setError("");
+                        setTeamName(team.name);
+                        setEditingName(true);
+                      }}
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M12 20h9" />
+                        <path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                      </svg>
+                    </button>
+                    <button
+                      className={`${s.iconButton} ${s.deleteIconButton}`}
+                      type="button"
+                      aria-label="Usuń drużynę"
+                      title="Usuń drużynę"
+                      disabled={deletingTeam || renaming || removingId !== null}
+                      onClick={async () => {
+                        if (!window.confirm(`Usunąć drużynę "${team.name}"? Konta wszystkich jej uczniów również zostaną usunięte.`)) return;
+                        setError("");
+                        setDeletingTeam(true);
+                        try {
+                          await apiJson<unknown>(`/api/teams/${encodeURIComponent(id)}`, { method: "DELETE" });
+                          router.replace("/dashboard/teams");
+                        } catch (err) {
+                          setError(err instanceof Error ? err.message : "Nie udało się usunąć drużyny.");
+                          setDeletingTeam(false);
+                        }
+                      }}
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                        <path d="M10 11v6" />
+                        <path d="M14 11v6" />
+                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                      </svg>
+                    </button>
+                  </>
+                )}
+              </div>
+              <p className={s.subtitle}>{team.categoryName}</p>
+            </div>
+            <span className={s.pill}>{team.students.length} / {team.maxMembers} uczniów</span>
+          </div>
           <div className={s.columns}>
             <section className={s.card}>
               <h2>Skład drużyny</h2>

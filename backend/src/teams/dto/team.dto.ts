@@ -15,6 +15,14 @@ export class CreateTeamDto {
   categoryId: string;
 }
 
+export class UpdateTeamDto {
+  @Transform(trim)
+  @IsString()
+  @IsNotEmpty({ message: 'Nazwa drużyny jest wymagana.' })
+  @MaxLength(100, { message: 'Nazwa drużyny może mieć najwyżej 100 znaków.' })
+  name: string;
+}
+
 export class AddStudentDto {
   @Transform(trim)
   @IsString()
