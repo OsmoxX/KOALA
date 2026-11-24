@@ -69,10 +69,52 @@ export const validTeacher = () => ({
 });
 
 export const STUDENT_TEMP_PASSWORD = 'Start2026!';
+export const TEACHER_PASSWORD = 'Koala2026!';
+
+/** Kategorie jak w migracji `teams_management` (testy czyszczą tabelę). */
+export async function createCategories(app: INestApplication) {
+  const prisma = app.get(PrismaService);
+  const primary = await prisma.teamCategory.create({
+    data: {
+      name: 'Szkoła podstawowa, klasy 6–8',
+      minMembers: 3,
+      maxMembers: 4,
+    },
+  });
+  const secondary = await prisma.teamCategory.create({
+    data: { name: 'Szkoła ponadpodstawowa', minMembers: 3, maxMembers: 4 },
+  });
+  return { primary, secondary };
+}
+
+/** Aktywny nauczyciel (e-mail potwierdzony) – istniejący albo nowy. */
+export async function createTeacher(
+  app: INestApplication,
+  email = 'opiekun@example.com',
+) {
+  const prisma = app.get(PrismaService);
+  return (
+    (await prisma.user.findUnique({ where: { email } })) ??
+    (await prisma.user.create({
+      data: {
+        email,
+        passwordHash: await hashPassword(TEACHER_PASSWORD),
+        role: Role.TEACHER,
+        firstName: 'Anna',
+        lastName: 'Nowak',
+        emailVerifiedAt: new Date(),
+        teacherProfile: {
+          create: { schoolName: 'SP nr 1', schoolCity: 'Poznań' },
+        },
+      },
+    }))
+  );
+}
 
 /**
  * Drużyna z aktywnym opiekunem i uczniami z hasłem jednorazowym – tak jak
- * po założeniu kont przez nauczyciela (API drużyn: KOALA-81/82).
+ * po założeniu kont przez nauczyciela (API drużyn: KOALA-81/82), ale
+ * z ustalonymi loginami, żeby testy logowania były przewidywalne.
  */
 export async function createTeamWithStudents(
   app: INestApplication,
@@ -83,27 +125,12 @@ export async function createTeamWithStudents(
   } = {},
 ) {
   const prisma = app.get(PrismaService);
-  const teacherEmail = opts.teacherEmail ?? 'opiekun@example.com';
   const category =
     (await prisma.teamCategory.findFirst()) ??
     (await prisma.teamCategory.create({
       data: { name: 'Klasy 7–8', minMembers: 2, maxMembers: 4 },
     }));
-  const teacher =
-    (await prisma.user.findUnique({ where: { email: teacherEmail } })) ??
-    (await prisma.user.create({
-      data: {
-        email: teacherEmail,
-        passwordHash: await hashPassword('Koala2026!'),
-        role: Role.TEACHER,
-        firstName: 'Anna',
-        lastName: 'Nowak',
-        emailVerifiedAt: new Date(),
-        teacherProfile: {
-          create: { schoolName: 'SP nr 1', schoolCity: 'Poznań' },
-        },
-      },
-    }));
+  const teacher = await createTeacher(app, opts.teacherEmail);
   const team = await prisma.team.create({
     data: {
       name: opts.teamName ?? 'Pitagorejczycy',
